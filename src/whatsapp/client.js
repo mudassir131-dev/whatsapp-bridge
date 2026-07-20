@@ -77,7 +77,9 @@ class WhatsAppClient extends EventEmitter {
         if (connection === 'close') {
           const error = lastDisconnect?.error;
           const statusCode = error?.output?.statusCode;
-          const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+          const shouldReconnect = statusCode !== DisconnectReason.loggedOut && 
+                                  this.connectionStatus !== 'DISCONNECTED' && 
+                                  this.connectionStatus !== 'LOGGED_OUT';
 
           waLogger.warn(`Connection closed. Status code: ${statusCode || 'unknown'}. Error: ${error ? error.message : 'none'}`);
 
@@ -86,10 +88,13 @@ class WhatsAppClient extends EventEmitter {
             this.emit('status', this.connectionStatus);
             this.handleReconnect();
           } else {
-            this.connectionStatus = 'LOGGED_OUT';
-            waLogger.error('Logged out from WhatsApp. Re-authentication is required!');
+            // Only set to LOGGED_OUT if we weren't already manually disconnected
+            if (this.connectionStatus !== 'DISCONNECTED') {
+              this.connectionStatus = 'LOGGED_OUT';
+              this.emit('logout');
+            }
+            waLogger.error('Logged out or disconnected from WhatsApp. Re-authentication is required!');
             this.emit('status', this.connectionStatus);
-            this.emit('logout');
           }
         }
       });
