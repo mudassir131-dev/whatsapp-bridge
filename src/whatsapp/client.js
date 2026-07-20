@@ -18,6 +18,7 @@ class WhatsAppClient extends EventEmitter {
     this.maxReconnectAttempts = 10;
     this.reconnectTimeout = null;
     this.appStartTime = Date.now();
+    this.qrCount = 0;
   }
 
   async initialize() {
@@ -30,6 +31,7 @@ class WhatsAppClient extends EventEmitter {
       return;
     }
 
+    this.qrCount = 0;
     this.connectionStatus = 'CONNECTING';
     this.emit('status', this.connectionStatus);
 
@@ -51,6 +53,12 @@ class WhatsAppClient extends EventEmitter {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
+          this.qrCount++;
+          if (this.qrCount > 5) {
+            waLogger.warn('QR code not scanned within 5 updates. Stopping WhatsApp connection to prevent infinite loop.');
+            await this.disconnect();
+            return;
+          }
           this.handleQR(qr);
         }
 
@@ -239,6 +247,30 @@ class WhatsAppClient extends EventEmitter {
     this.connectionStatus = 'DISCONNECTED';
     this.emit('status', this.connectionStatus);
     this.emit('logout');
+  }
+
+  async disconnect() {
+    waLogger.info('Disconnecting WhatsApp socket due to QR scan timeout...');
+    
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+    
+    this.reconnectAttempt = 0;
+    
+    if (this.sock) {
+      try {
+        this.sock.end();
+      } catch (e) {
+        // Ignore
+      }
+      this.sock = null;
+    }
+
+    this.connectionStatus = 'DISCONNECTED';
+    this.emit('status', this.connectionStatus);
+    this.emit('qr_timeout');
   }
 }
 

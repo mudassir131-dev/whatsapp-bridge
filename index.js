@@ -32,12 +32,21 @@ async function main() {
     process.exit(1);
   }
 
-  // 2. Start WhatsApp connection
-  try {
-    await whatsappClient.initialize();
-  } catch (error) {
-    logger.error('Failed to initialize WhatsApp connection:', error);
-    process.exit(1);
+  // 2. Start WhatsApp connection ONLY if session credentials already exist
+  const fs = require('fs');
+  const path = require('path');
+  const credsFile = path.join(config.whatsapp.authDir, 'creds.json');
+  
+  if (fs.existsSync(credsFile)) {
+    bridgeLogger.info('Saved WhatsApp session credentials found. Initializing connection automatically...');
+    try {
+      await whatsappClient.initialize();
+    } catch (error) {
+      logger.error('Failed to initialize WhatsApp connection:', error);
+      process.exit(1);
+    }
+  } else {
+    bridgeLogger.info('No saved WhatsApp session found. Waiting for admin to send /connect command before generating QR.');
   }
 
   // Set up ready/connected message

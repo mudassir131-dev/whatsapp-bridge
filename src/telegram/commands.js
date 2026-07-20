@@ -213,6 +213,27 @@ whatsappClient.on('connected', async () => {
   }
 });
 
+whatsappClient.on('qr_timeout', async () => {
+  // Clear any active QR code messages from admin chats and alert them
+  for (const adminId of config.telegram.adminIds) {
+    const prevMsgId = qrMessagesMap[adminId];
+    if (prevMsgId) {
+      try {
+        await bot.api.deleteMessage(adminId, prevMsgId);
+      } catch (err) {
+        tgLogger.debug(`Failed to clean up QR message on timeout for admin ${adminId}:`, err.message);
+      }
+      delete qrMessagesMap[adminId];
+    }
+    
+    try {
+      await bot.api.sendMessage(adminId, '⚠️ *WhatsApp Connection Timeout*:\n\nQR code was not scanned in time. Connection process has been stopped. Use /connect to try again.', { parse_mode: 'Markdown' });
+    } catch (err) {
+      tgLogger.error(`Failed to send timeout notification to admin ${adminId}:`, err);
+    }
+  }
+});
+
 // Handle Callback Queries (Inline Keyboard Buttons)
 bot.on('callback_query:data', async (ctx) => {
   const data = ctx.callbackQuery.data;
