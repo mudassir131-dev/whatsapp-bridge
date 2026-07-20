@@ -190,7 +190,7 @@ class WhatsAppClient extends EventEmitter {
     }
 
     // STRICT DOUBLE-VALIDATION CHECK FOR 1-to-1 PRIVATE CHATS
-    if (!jid || !jid.endsWith('@s.whatsapp.net')) {
+    if (!jid || (!jid.endsWith('@s.whatsapp.net') && !jid.endsWith('@lid'))) {
       waLogger.error(`BLOCKED outbound WhatsApp message: Destination JID '${jid}' is not a valid 1-to-1 private chat!`);
       throw new Error('Outbound message blocked: Destination JID is not a valid 1-to-1 private chat');
     }

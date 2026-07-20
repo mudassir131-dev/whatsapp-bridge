@@ -7,8 +7,8 @@ function parseIncomingMessage(msg) {
   }
 
   // Ignore group messages, channels, newsletters, statuses, broadcasts, etc.
-  // Direct 1-on-1 chats always end with @s.whatsapp.net JID suffix.
-  if (!msg.key.remoteJid || !msg.key.remoteJid.endsWith('@s.whatsapp.net')) {
+  // Direct 1-on-1 chats always end with @s.whatsapp.net or @lid JID suffix.
+  if (!msg.key.remoteJid || (!msg.key.remoteJid.endsWith('@s.whatsapp.net') && !msg.key.remoteJid.endsWith('@lid'))) {
     return null;
   }
 
