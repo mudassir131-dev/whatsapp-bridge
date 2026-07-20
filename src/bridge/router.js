@@ -73,6 +73,10 @@ function addToProcessed(messageId) {
 }
 
 async function handleIncomingWhatsApp(rawMsg) {
+  const remoteJid = rawMsg.key?.remoteJid;
+  const fromMe = rawMsg.key?.fromMe;
+  bridgeLogger.info(`Router received raw WhatsApp message: JID=${remoteJid}, fromMe=${fromMe}`);
+
   let parsedMsg;
   try {
     parsedMsg = parseIncomingMessage(rawMsg);
@@ -82,9 +86,7 @@ async function handleIncomingWhatsApp(rawMsg) {
   }
 
   if (!parsedMsg) {
-    const remoteJid = rawMsg.key?.remoteJid;
-    const fromMe = rawMsg.key?.fromMe;
-    bridgeLogger.debug(`Inbound message filtered out (e.g., self-message, status, group, unsupported): JID=${remoteJid}, fromMe=${fromMe}`);
+    bridgeLogger.info(`Inbound message filtered out (self-message, group, status, or unsupported): JID=${remoteJid}, fromMe=${fromMe}`);
     return;
   }
 
