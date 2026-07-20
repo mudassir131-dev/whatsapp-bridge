@@ -82,7 +82,9 @@ async function handleIncomingWhatsApp(rawMsg) {
   }
 
   if (!parsedMsg) {
-    // Message was filtered out (e.g., self-message, status, group, unsupported)
+    const remoteJid = rawMsg.key?.remoteJid;
+    const fromMe = rawMsg.key?.fromMe;
+    bridgeLogger.debug(`Inbound message filtered out (e.g., self-message, status, group, unsupported): JID=${remoteJid}, fromMe=${fromMe}`);
     return;
   }
 

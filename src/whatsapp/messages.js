@@ -12,7 +12,30 @@ function parseIncomingMessage(msg) {
     return null;
   }
 
-  const messageType = Object.keys(msg.message || {})[0];
+  let messageContent = msg.message;
+  if (!messageContent) {
+    return null;
+  }
+
+  // Unwrap ephemeral, viewOnce, or documentWithCaption wrappers
+  if (messageContent.ephemeralMessage) {
+    messageContent = messageContent.ephemeralMessage.message;
+  }
+  if (messageContent.viewOnceMessage) {
+    messageContent = messageContent.viewOnceMessage.message;
+  }
+  if (messageContent.viewOnceMessageV2) {
+    messageContent = messageContent.viewOnceMessageV2.message;
+  }
+  if (messageContent.documentWithCaptionMessage) {
+    messageContent = messageContent.documentWithCaptionMessage.message;
+  }
+
+  if (!messageContent) {
+    return null;
+  }
+
+  const messageType = Object.keys(messageContent)[0];
   if (!messageType) {
     return null;
   }
@@ -35,8 +58,6 @@ function parseIncomingMessage(msg) {
     mediaInfo: null,
     quoted: null,
   };
-
-  const messageContent = msg.message;
 
   // Extract quoted message context
   const contextInfo = messageContent[messageType]?.contextInfo;

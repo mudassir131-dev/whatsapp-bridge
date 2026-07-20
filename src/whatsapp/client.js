@@ -96,7 +96,7 @@ class WhatsAppClient extends EventEmitter {
 
       // Handle incoming messages
       this.sock.ev.on('messages.upsert', (event) => {
-        if (event.type === 'notify') {
+        if (event.messages) {
           for (const msg of event.messages) {
             this.emit('message', msg);
           }
