@@ -1,0 +1,18 @@
+# Dependency directories
+node_modules/
+
+# Secrets
+.env
+
+# WhatsApp Auth/Session files (contains QR/creds)
+auth/
+
+# Database files
+data/
+
+# Log files
+*.log
+
+# OS metadata
+.DS_Store
+Thumbs.db

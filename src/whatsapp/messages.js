@@ -1,0 +1,112 @@
+const waLogger = require('../utils/logger').whatsapp;
+
+function parseIncomingMessage(msg) {
+  // Ignore messages from self
+  if (msg.key.fromMe) {
+    return null;
+  }
+
+  // Ignore group messages, channels, newsletters, statuses, broadcasts, etc.
+  // Direct 1-on-1 chats always end with @s.whatsapp.net JID suffix.
+  if (!msg.key.remoteJid || !msg.key.remoteJid.endsWith('@s.whatsapp.net')) {
+    return null;
+  }
+
+  const messageType = Object.keys(msg.message || {})[0];
+  if (!messageType) {
+    return null;
+  }
+
+  // Ignore protocol messages, keep-alives, senderKeyDistributionMessage, etc.
+  const ignoredTypes = ['protocolMessage', 'senderKeyDistributionMessage', 'reactionMessage'];
+  if (ignoredTypes.includes(messageType)) {
+    return null;
+  }
+
+  const parsed = {
+    id: msg.key.id,
+    chatId: msg.key.remoteJid,
+    senderNumber: msg.key.remoteJid.split('@')[0],
+    senderName: msg.pushName || 'Unknown Contact',
+    timestamp: (msg.messageTimestamp ? parseInt(msg.messageTimestamp, 10) * 1000 : Date.now()),
+    text: '',
+    isMedia: false,
+    mediaType: null,
+    mediaInfo: null,
+    quoted: null,
+  };
+
+  const messageContent = msg.message;
+
+  // Extract quoted message context
+  const contextInfo = messageContent[messageType]?.contextInfo;
+  if (contextInfo?.quotedMessage) {
+    const quotedMsg = contextInfo.quotedMessage;
+    const quotedType = Object.keys(quotedMsg)[0];
+    let quotedText = '';
+
+    if (quotedType === 'conversation') {
+      quotedText = quotedMsg.conversation;
+    } else if (quotedType === 'extendedTextMessage') {
+      quotedText = quotedMsg.extendedTextMessage.text;
+    } else if (quotedType === 'imageMessage') {
+      quotedText = `[Image] ${quotedMsg.imageMessage.caption || ''}`;
+    } else if (quotedType === 'documentMessage') {
+      quotedText = `[Document] ${quotedMsg.documentMessage.fileName || quotedMsg.documentMessage.title || ''}`;
+    } else {
+      quotedText = `[Quoted ${quotedType}]`;
+    }
+
+    parsed.quoted = {
+      id: contextInfo.stanzaId,
+      sender: contextInfo.participant,
+      text: quotedText,
+    };
+  }
+
+  // Handle specific message types
+  if (messageType === 'conversation') {
+    parsed.text = messageContent.conversation;
+  } else if (messageType === 'extendedTextMessage') {
+    parsed.text = messageContent.extendedTextMessage.text;
+  } else if (messageType === 'imageMessage') {
+    parsed.isMedia = true;
+    parsed.mediaType = 'image';
+    parsed.text = messageContent.imageMessage.caption || '';
+    parsed.mediaInfo = {
+      type: 'image',
+      caption: messageContent.imageMessage.caption || '',
+      mimeType: messageContent.imageMessage.mimetype,
+      filename: 'image.jpg',
+    };
+  } else if (messageType === 'documentMessage') {
+    parsed.isMedia = true;
+    parsed.mediaType = 'document';
+    parsed.text = messageContent.documentMessage.caption || '';
+    parsed.mediaInfo = {
+      type: 'document',
+      caption: messageContent.documentMessage.caption || '',
+      mimeType: messageContent.documentMessage.mimetype,
+      filename: messageContent.documentMessage.fileName || 'document',
+    };
+  } else {
+    // Other unsupported media types (video, audio, sticker)
+    parsed.isMedia = true;
+    parsed.mediaType = messageType;
+    parsed.text = `[Unsupported Message Type: ${messageType}]`;
+    parsed.mediaInfo = {
+      type: messageType,
+      caption: '',
+      filename: 'file',
+    };
+  }
+
+  // Log message parsing
+  waLogger.debug(`Parsed inbound message from ${parsed.senderName} (${parsed.senderNumber}): "${parsed.text}"`);
+
+  return parsed;
+}
+
+module.exports = {
+  parseIncomingMessage,
+};

@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: whatsapp-telegram-bridge
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    plan: individual # Render Free Tier or custom individual plan
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: PORT
+        value: 3000
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false # User will configure this in Render UI
+      - key: TELEGRAM_ADMIN_IDS
+        sync: false # User will configure this in Render UI
+      - key: GROQ_API_KEY
+        sync: false # User will configure this in Render UI
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
+      - key: AI_ENABLED
+        value: "true"
+      # If using Render's Persistent Disk (Paid tiers only), uncomment the disk config below
+      # and configure the AUTH_DIR and DB_PATH env vars to point to the mounted path.
+      # - key: AUTH_DIR
+      #   value: /opt/bridge-data/auth
+      # - key: DB_PATH
+      #   value: /opt/bridge-data/database.db
+
+    # Uncomment this block if using Render Persistent Disks (Paid plan required)
+    # disks:
+    #   - name: bridge-data
+    #     mountPath: /opt/bridge-data
+    #     sizeGB: 1
