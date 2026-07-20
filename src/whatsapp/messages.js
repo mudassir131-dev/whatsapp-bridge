@@ -46,12 +46,23 @@ function parseIncomingMessage(msg) {
     return null;
   }
 
+  let ts = Date.now();
+  if (msg.messageTimestamp) {
+    const rawTs = msg.messageTimestamp;
+    const numTs = typeof rawTs === 'object' && typeof rawTs.toNumber === 'function'
+      ? rawTs.toNumber()
+      : Number(rawTs);
+    if (!isNaN(numTs)) {
+      ts = numTs * 1000;
+    }
+  }
+
   const parsed = {
     id: msg.key.id,
     chatId: msg.key.remoteJid,
     senderNumber: msg.key.remoteJid.split('@')[0],
     senderName: msg.pushName || 'Unknown Contact',
-    timestamp: (msg.messageTimestamp ? parseInt(msg.messageTimestamp, 10) * 1000 : Date.now()),
+    timestamp: ts,
     text: '',
     isMedia: false,
     mediaType: null,
