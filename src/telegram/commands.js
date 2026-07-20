@@ -115,15 +115,15 @@ bot.command('disconnect', async (ctx) => {
   }
 });
 
-// AI Global On command
-bot.command('ai_on', async (ctx) => {
+// AI Global On command (supports both /ai_on and /aion)
+bot.command(['ai_on', 'aion'], async (ctx) => {
   db.updateChatSettings('global', { aiEnabled: true });
   tgLogger.info('AI Auto-Replies enabled globally by admin.');
   await ctx.reply('🤖 *AI Auto-Replies globally enabled.*', { parse_mode: 'Markdown' });
 });
 
-// AI Global Off command
-bot.command('ai_off', async (ctx) => {
+// AI Global Off command (supports both /ai_off and /aioff)
+bot.command(['ai_off', 'aioff'], async (ctx) => {
   db.updateChatSettings('global', { aiEnabled: false });
   tgLogger.info('AI Auto-Replies disabled globally by admin.');
   await ctx.reply('🤖 *AI Auto-Replies globally disabled.* (WhatsApp messages will still be forwarded, and you can reply manually).', { parse_mode: 'Markdown' });

@@ -32,6 +32,13 @@ async function main() {
     process.exit(1);
   }
 
+  // Initialize global AI state in database if not already set, using env config as default
+  const checkGlobalInDb = db.db.prepare("SELECT 1 FROM chat_settings WHERE wa_chat_id = 'global'").get();
+  if (!checkGlobalInDb) {
+    db.updateChatSettings('global', { aiEnabled: config.ai.enabled });
+    bridgeLogger.info(`Initialized global AI setting in database to default: ${config.ai.enabled}`);
+  }
+
   // 2. Start WhatsApp connection ONLY if session credentials already exist
   const fs = require('fs');
   const path = require('path');
